@@ -139,6 +139,9 @@ DP AI response:
 });
 
 /* ================= START SERVER ================= */
-app.listen(5000, () => {
-  console.log("🌙 DP AI backend running on http://localhost:5000");
+const PORT = process.env.PORT || 5000;
+
+app.listen(PORT, () => {
+  console.log(`🌙 DP AI backend running on port ${PORT}`);
 });
+
