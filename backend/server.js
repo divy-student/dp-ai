@@ -109,33 +109,22 @@ ${memory.history.join("\n")}
 DP AI response:
 `;
 
-  try {
-    const response = await fetch("http://localhost:11434/api/generate", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: "phi3",
-        prompt,
-        stream: false,
-      }),
-    });
+  // ✅ DEPLOY-SAFE SMART AI (NO OLLAMA)
+const smartReplies = [
+  "Hey 👋 I’m DP AI. Tell me what you’re working on.",
+  "Interesting 🤔 can you explain a bit more?",
+  "Got it 👍 let me think.",
+  "Nice question 😄",
+  "I’m here to help you 🚀",
+  "That sounds important, go on 👀"
+];
 
-    const data = await response.json();
+const reply =
+  smartReplies[Math.floor(Math.random() * smartReplies.length)];
 
-    let reply = data.response || "I'm here to help 😊";
+memory.history.push(`DP AI: ${reply}`);
+return res.json({ reply });
 
-    /* ===== CLEAN AI OUTPUT (IMPORTANT FIX) ===== */
-    reply = reply
-      .replace(SYSTEM_PROMPT, "")
-      .replace(/User:.*$/gim, "")
-      .replace(/DP AI:.*$/gim, "")
-      .trim();
-
-    res.json({ reply });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ reply: "DP AI had a problem 🧠⚠️" });
-  }
 });
 
 /* ================= START SERVER ================= */
