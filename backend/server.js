@@ -45,6 +45,8 @@ function getSession(sessionId) {
 }
 
 /* ================= CHAT ROUTE ================= */
+console.log("GROQ KEY EXISTS:", !!process.env.GROQ_API_KEY);
+
 app.post("/chat", async (req, res) => {
   const { message, sessionId } = req.body;
 
