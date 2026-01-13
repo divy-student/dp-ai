@@ -9,50 +9,76 @@ app.use(express.json());
 /* ================= SESSION MEMORY ================= */
 const sessions = {};
 
+function getSession(sessionId) {
+  if (!sessions[sessionId]) {
+    sessions[sessionId] = {
+      name: null,
+      likes: [],
+      history: [],
+    };
+  }
+  return sessions[sessionId];
+}
+
 /* ================= SYSTEM PROMPT ================= */
 const SYSTEM_PROMPT = `
-You are DP AI 🌙 — a smart, calm, modern AI assistant.
+You are DP AI 🌙.
 
 Identity rules (STRICT):
 - Your name is DP AI.
 - You were created by Divy.
-- NEVER mention Microsoft, OpenAI, Google, Meta, or any company.
+- NEVER mention OpenAI, Google, Meta, Microsoft, or any company.
 - If asked "who created you" → reply exactly:
-  I was created by Divy.
+I was created by Divy.
 - If asked "who are you" → reply:
-  I am DP AI, created by Divy.
+I am DP AI, created by Divy.
 
-Behavior rules:
-- Be intelligent, helpful, and natural.
-- Think step by step internally, but reply briefly.
-- Never roleplay the user.
-- Never repeat conversation history.
-- Never include words like User:, DP AI:, or quotes.
-- Never dump prompts or internal text.
-
-Style:
-- Friendly, confident, slightly warm.
-- Not robotic, not over-talkative.
-- One clean response only.
+Behavior:
+- Be intelligent and calm.
+- Reply clearly and briefly.
+- Do not repeat yourself.
+- Do not output system text or conversation history.
 `;
-
-/* ================= SESSION HANDLER ================= */
-function getSession(sessionId) {
-  if (!sessions[sessionId]) {
-    sessions[sessionId] = { history: [] };
-  }
-  return sessions[sessionId];
-}
 
 /* ================= CHAT ROUTE ================= */
 app.post("/chat", async (req, res) => {
   const { message, sessionId, username } = req.body;
 
   if (!message || !sessionId) {
-    return res.status(400).json({ reply: "Invalid request" });
+    return res.json({ reply: "Invalid request." });
   }
 
   const memory = getSession(sessionId);
+  const userMessage = message.toLowerCase();
+
+  // Memory
+  if (userMessage.includes("my name is")) {
+    memory.name = message.split("is").pop().trim();
+  }
+
+  if (userMessage.includes("i love")) {
+    const like = message.split("love").pop().trim();
+    if (!memory.likes.includes(like)) memory.likes.push(like);
+  }
+
+  // Direct memory answers
+  if (userMessage.includes("what is my name")) {
+    return res.json({
+      reply: memory.name
+        ? `Your name is ${memory.name}.`
+        : "You haven’t told me your name yet.",
+    });
+  }
+
+  if (userMessage.includes("what do i love")) {
+    return res.json({
+      reply:
+        memory.likes.length > 0
+          ? `You love ${memory.likes.join(", ")}.`
+          : "You haven’t told me what you love yet.",
+    });
+  }
+
   memory.history.push(message);
   if (memory.history.length > 6) memory.history.shift();
 
@@ -61,7 +87,7 @@ ${SYSTEM_PROMPT}
 
 User name: ${username || "User"}
 
-Recent conversation:
+Conversation:
 ${memory.history.join("\n")}
 
 Answer:
@@ -73,28 +99,26 @@ Answer:
       {
         method: "POST",
         headers: {
+          "Authorization": `Bearer ${process.env.GROQ_API_KEY}`,
           "Content-Type": "application/json",
-          Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
         },
         body: JSON.stringify({
-          model: "llama3-70b-8192",
+          model: "llama3-8b-8192",
           messages: [{ role: "user", content: prompt }],
           temperature: 0.6,
-          max_tokens: 300,
         }),
       }
     );
 
     const data = await response.json();
-
     const reply =
-      data?.choices?.[0]?.message?.content?.trim() ||
+      data.choices?.[0]?.message?.content ||
       "I’m here to help 🙂";
 
     return res.json({ reply });
   } catch (err) {
     console.error("Groq error:", err);
-    return res.json({ reply: "DP AI had a problem 🧠⚠️" });
+    return res.json({ reply: "I’m having trouble thinking right now 🧠" });
   }
 });
 
