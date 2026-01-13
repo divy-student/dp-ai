@@ -1,9 +1,13 @@
 import express from "express";
 import cors from "cors";
+import fetch from "node-fetch";
 
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+/* ================= SESSION MEMORY ================= */
+const sessions = {};
 
 /* ================= SYSTEM PROMPT ================= */
 const SYSTEM_PROMPT = `
@@ -14,30 +18,49 @@ Identity rules (STRICT):
 - You were created by Divy.
 - NEVER mention Microsoft, OpenAI, Google, Meta, or any company.
 - If asked "who created you" → reply exactly:
-  I was created by Divy.
+I was created by Divy.
 - If asked "who are you" → reply:
-  I am DP AI, created by Divy.
+I am DP AI, created by Divy.
 
 Behavior rules:
 - Be intelligent, helpful, and natural.
-- Think step by step internally, but reply briefly.
-- Give clear answers, examples only when useful.
-- Never roleplay the user.
-- Never repeat conversation history.
-- Never include quotes or labels.
-- One clean response only.
+- Give short, clear answers.
+- No emojis unless friendly.
+- No roleplay.
+- No internal text.
 `;
+
+/* ================= SESSION HANDLER ================= */
+function getSession(sessionId) {
+  if (!sessions[sessionId]) {
+    sessions[sessionId] = { history: [] };
+  }
+  return sessions[sessionId];
+}
 
 /* ================= CHAT ROUTE ================= */
 app.post("/chat", async (req, res) => {
+  const { message, sessionId } = req.body;
+
+  if (!message || !sessionId) {
+    return res.json({ reply: "Invalid request." });
+  }
+
+  const memory = getSession(sessionId);
+  memory.history.push(message);
+  if (memory.history.length > 6) memory.history.shift();
+
+  const prompt = `
+${SYSTEM_PROMPT}
+
+Conversation:
+${memory.history.join("\n")}
+
+Answer:
+`;
+
   try {
-    const { message } = req.body;
-
-    if (!message) {
-      return res.json({ reply: "Please say something 🙂" });
-    }
-
-    const groqRes = await fetch(
+    const response = await fetch(
       "https://api.groq.com/openai/v1/chat/completions",
       {
         method: "POST",
@@ -46,26 +69,22 @@ app.post("/chat", async (req, res) => {
           Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
         },
         body: JSON.stringify({
-          model: "llama3-70b-8192",
-          messages: [
-            { role: "system", content: SYSTEM_PROMPT },
-            { role: "user", content: message },
-          ],
-          temperature: 0.7,
+          model: "llama3-8b-8192",
+          messages: [{ role: "user", content: prompt }],
+          temperature: 0.6,
         }),
       }
     );
 
-    const data = await groqRes.json();
+    const data = await response.json();
 
     const reply =
-      data?.choices?.[0]?.message?.content ||
-      "I’m here with you 🙂";
+      data?.choices?.[0]?.message?.content?.trim() ||
+      "I had a small issue. Please try again in a moment 🙂";
 
     return res.json({ reply });
-
   } catch (err) {
-    console.error("GROQ ERROR:", err);
+    console.error("Groq Error:", err.message);
     return res.json({
       reply: "I had a small issue. Please try again in a moment 🙂",
     });
@@ -73,7 +92,8 @@ app.post("/chat", async (req, res) => {
 });
 
 /* ================= START SERVER ================= */
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
-  console.log(`🌙 DP AI backend running on port ${PORT}`);
+  console.log("🌙 DP AI backend running on port", PORT);
+  console.log("GROQ KEY EXISTS:", !!process.env.GROQ_API_KEY);
 });
