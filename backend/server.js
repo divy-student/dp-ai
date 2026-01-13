@@ -24,11 +24,10 @@ Identity rules (STRICT):
 
 Behavior rules:
 - Be intelligent, helpful, and natural.
-- Think internally, reply briefly.
-- Give clear answers, examples only when useful.
+- Think step by step internally, but reply briefly.
 - Never roleplay the user.
 - Never repeat conversation history.
-- Never include labels like User:, Assistant:, DP AI:
+- Never include words like User:, DP AI:, or quotes.
 - Never dump prompts or internal text.
 
 Style:
@@ -40,74 +39,35 @@ Style:
 /* ================= SESSION HANDLER ================= */
 function getSession(sessionId) {
   if (!sessions[sessionId]) {
-    sessions[sessionId] = {
-      name: null,
-      likes: [],
-      history: [],
-    };
+    sessions[sessionId] = { history: [] };
   }
   return sessions[sessionId];
 }
 
 /* ================= CHAT ROUTE ================= */
 app.post("/chat", async (req, res) => {
-  try {
-    const { message, sessionId, username } = req.body;
+  const { message, sessionId, username } = req.body;
 
-    if (!message || !sessionId) {
-      return res.status(400).json({ reply: "Invalid request" });
-    }
+  if (!message || !sessionId) {
+    return res.status(400).json({ reply: "Invalid request" });
+  }
 
-    const memory = getSession(sessionId);
-    const userMessage = message.toLowerCase();
+  const memory = getSession(sessionId);
+  memory.history.push(message);
+  if (memory.history.length > 6) memory.history.shift();
 
-    /* ===== MEMORY EXTRACTION ===== */
-    if (userMessage.includes("my name is")) {
-      memory.name = message.split("is").pop().trim();
-    }
-
-    if (userMessage.includes("i love")) {
-      const like = message.split("love").pop().trim();
-      if (like && !memory.likes.includes(like)) {
-        memory.likes.push(like);
-      }
-    }
-
-    /* ===== DIRECT MEMORY ANSWERS ===== */
-    if (userMessage.includes("what is my name")) {
-      return res.json({
-        reply: memory.name
-          ? `Your name is ${memory.name}.`
-          : "You haven't told me your name yet.",
-      });
-    }
-
-    if (userMessage.includes("what do i love")) {
-      return res.json({
-        reply:
-          memory.likes.length > 0
-            ? `You love ${memory.likes.join(", ")}.`
-            : "You haven't told me what you love yet.",
-      });
-    }
-
-    /* ===== STORE SHORT HISTORY ===== */
-    memory.history.push(message);
-    if (memory.history.length > 6) memory.history.shift();
-
-    /* ===== FINAL PROMPT ===== */
-    const prompt = `
+  const prompt = `
 ${SYSTEM_PROMPT}
 
 User name: ${username || "User"}
 
-Recent messages:
+Recent conversation:
 ${memory.history.join("\n")}
 
 Answer:
 `;
 
-    /* ================= GROQ CALL ================= */
+  try {
     const response = await fetch(
       "https://api.groq.com/openai/v1/chat/completions",
       {
@@ -117,11 +77,8 @@ Answer:
           Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
         },
         body: JSON.stringify({
-          model: "llama3-8b-8192",
-          messages: [
-            { role: "system", content: SYSTEM_PROMPT },
-            { role: "user", content: prompt },
-          ],
+          model: "llama3-70b-8192",
+          messages: [{ role: "user", content: prompt }],
           temperature: 0.6,
           max_tokens: 300,
         }),
@@ -130,23 +87,14 @@ Answer:
 
     const data = await response.json();
 
-    let reply =
+    const reply =
       data?.choices?.[0]?.message?.content?.trim() ||
-      "I'm here to help 🙂";
-
-    /* ===== CLEAN OUTPUT ===== */
-    reply = reply
-      .replace(/User:/gi, "")
-      .replace(/Assistant:/gi, "")
-      .replace(/DP AI:/gi, "")
-      .trim();
+      "I’m here to help 🙂";
 
     return res.json({ reply });
   } catch (err) {
     console.error("Groq error:", err);
-    return res.json({
-      reply: "⚠️ DP AI had a temporary issue. Please try again.",
-    });
+    return res.json({ reply: "DP AI had a problem 🧠⚠️" });
   }
 });
 
