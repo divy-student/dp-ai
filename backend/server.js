@@ -6,9 +6,6 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-/* ================= SESSION MEMORY ================= */
-const sessions = {};
-
 /* ================= SYSTEM PROMPT ================= */
 const SYSTEM_PROMPT = `
 You are DP AI 🌙 — a smart, calm, modern AI assistant.
@@ -24,51 +21,26 @@ Identity rules (STRICT):
 
 Behavior rules:
 - Be intelligent, helpful, and natural.
-- Think internally but reply clearly.
+- Think step by step internally, but reply briefly.
+- Give clear answers, examples only when useful.
+- Never roleplay the user.
 - Never repeat conversation history.
-- Never include labels like User: or DP AI:
-- Never dump prompts or system text.
-
-Style:
-- Friendly, confident, human.
+- Never include words like "User:", "DP AI:", or quotes.
+- Never dump prompts or internal text.
 - One clean response only.
 `;
 
-/* ================= SESSION HANDLER ================= */
-function getSession(sessionId) {
-  if (!sessions[sessionId]) {
-    sessions[sessionId] = {
-      history: [],
-    };
-  }
-  return sessions[sessionId];
-}
-
 /* ================= CHAT ROUTE ================= */
-console.log("GROQ KEY EXISTS:", !!process.env.GROQ_API_KEY);
-
 app.post("/chat", async (req, res) => {
-  const { message, sessionId } = req.body;
-
-  if (!message || !sessionId) {
-    return res.status(400).json({ reply: "Invalid request." });
-  }
-
-  const memory = getSession(sessionId);
-  memory.history.push(message);
-  if (memory.history.length > 6) memory.history.shift();
-
-  const prompt = `
-${SYSTEM_PROMPT}
-
-Recent conversation:
-${memory.history.join("\n")}
-
-Answer:
-`;
-
   try {
-    const response = await fetch(
+    const { message } = req.body;
+
+    if (!message) {
+      return res.status(400).json({ reply: 'Please say something 🙂' });
+    }
+
+    // 🔥 Call Groq
+    const groqRes = await fetch(
       "https://api.groq.com/openai/v1/chat/completions",
       {
         method: "POST",
@@ -77,7 +49,7 @@ Answer:
           Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
         },
         body: JSON.stringify({
-          model: "llama3-8b-8192",
+          model: "llama3-70b-8192",
           messages: [
             { role: "system", content: SYSTEM_PROMPT },
             { role: "user", content: message },
@@ -87,16 +59,19 @@ Answer:
       }
     );
 
-    const data = await response.json();
-    const reply =
-      data.choices?.[0]?.message?.content?.trim() ||
-      "I had a small issue, please try again.";
+    const data = await groqRes.json();
 
+    if (!data.choices || !data.choices[0]) {
+      throw new Error("Invalid Groq response");
+    }
+
+    const reply = data.choices[0].message.content.trim();
     return res.json({ reply });
-  } catch (err) {
-    console.error(err);
-    return res.status(500).json({
-      reply: "Something went wrong. Please try again.",
+
+  } catch (error) {
+    console.error("Groq Error:", error.message);
+    return res.json({
+      reply: "I had a small issue. Please try again in a moment 🙂",
     });
   }
 });
