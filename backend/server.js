@@ -24,19 +24,17 @@ Identity rules (STRICT):
 
 Behavior rules:
 - Be intelligent, helpful, and natural.
-- Think step by step internally, but reply briefly.
+- Think internally, reply briefly.
 - Give clear answers, examples only when useful.
 - Never roleplay the user.
 - Never repeat conversation history.
-- Never include labels like User: or DP AI:
+- Never include labels like User:, Assistant:, DP AI:
 - Never dump prompts or internal text.
 
 Style:
 - Friendly, confident, slightly warm.
 - Not robotic, not over-talkative.
 - One clean response only.
-
-Respond ONLY with the final answer.
 `;
 
 /* ================= SESSION HANDLER ================= */
@@ -56,7 +54,7 @@ app.post("/chat", async (req, res) => {
   try {
     const { message, sessionId, username } = req.body;
 
-    if (!sessionId || !message) {
+    if (!message || !sessionId) {
       return res.status(400).json({ reply: "Invalid request" });
     }
 
@@ -93,7 +91,7 @@ app.post("/chat", async (req, res) => {
       });
     }
 
-    /* ===== STORE HISTORY ===== */
+    /* ===== STORE SHORT HISTORY ===== */
     memory.history.push(message);
     if (memory.history.length > 6) memory.history.shift();
 
@@ -103,12 +101,14 @@ ${SYSTEM_PROMPT}
 
 User name: ${username || "User"}
 
-Recent conversation:
+Recent messages:
 ${memory.history.join("\n")}
+
+Answer:
 `;
 
     /* ================= GROQ CALL ================= */
-    const groqResponse = await fetch(
+    const response = await fetch(
       "https://api.groq.com/openai/v1/chat/completions",
       {
         method: "POST",
@@ -122,23 +122,31 @@ ${memory.history.join("\n")}
             { role: "system", content: SYSTEM_PROMPT },
             { role: "user", content: prompt },
           ],
-          temperature: 0.7,
+          temperature: 0.6,
+          max_tokens: 300,
         }),
       }
     );
 
-    const data = await groqResponse.json();
+    const data = await response.json();
 
     let reply =
       data?.choices?.[0]?.message?.content?.trim() ||
-      "I’m here with you 🙂";
+      "I'm here to help 🙂";
 
-    memory.history.push(reply);
+    /* ===== CLEAN OUTPUT ===== */
+    reply = reply
+      .replace(/User:/gi, "")
+      .replace(/Assistant:/gi, "")
+      .replace(/DP AI:/gi, "")
+      .trim();
 
     return res.json({ reply });
   } catch (err) {
-    console.error("Groq Error:", err);
-    return res.json({ reply: "DP AI had a problem 🧠⚠️" });
+    console.error("Groq error:", err);
+    return res.json({
+      reply: "⚠️ DP AI had a temporary issue. Please try again.",
+    });
   }
 });
 
