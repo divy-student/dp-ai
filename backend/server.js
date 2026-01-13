@@ -1,6 +1,5 @@
 import express from "express";
 import cors from "cors";
-import fetch from "node-fetch";
 
 const app = express();
 app.use(cors());
@@ -25,8 +24,7 @@ Behavior rules:
 - Give clear answers, examples only when useful.
 - Never roleplay the user.
 - Never repeat conversation history.
-- Never include words like "User:", "DP AI:", or quotes.
-- Never dump prompts or internal text.
+- Never include quotes or labels.
 - One clean response only.
 `;
 
@@ -36,10 +34,9 @@ app.post("/chat", async (req, res) => {
     const { message } = req.body;
 
     if (!message) {
-      return res.status(400).json({ reply: 'Please say something 🙂' });
+      return res.json({ reply: "Please say something 🙂" });
     }
 
-    // 🔥 Call Groq
     const groqRes = await fetch(
       "https://api.groq.com/openai/v1/chat/completions",
       {
@@ -61,15 +58,14 @@ app.post("/chat", async (req, res) => {
 
     const data = await groqRes.json();
 
-    if (!data.choices || !data.choices[0]) {
-      throw new Error("Invalid Groq response");
-    }
+    const reply =
+      data?.choices?.[0]?.message?.content ||
+      "I’m here with you 🙂";
 
-    const reply = data.choices[0].message.content.trim();
     return res.json({ reply });
 
-  } catch (error) {
-    console.error("Groq Error:", error.message);
+  } catch (err) {
+    console.error("GROQ ERROR:", err);
     return res.json({
       reply: "I had a small issue. Please try again in a moment 🙂",
     });
