@@ -71,9 +71,20 @@ app.post("/chat", async (req, res) => {
 
     const data = await groqResponse.json();
 
-    const reply =
-      data?.choices?.[0]?.message?.content ||
-      "I’m here with you 🙂";
+    let reply = "I’m here with you 🙂";
+
+if (
+  data &&
+  data.choices &&
+  data.choices.length > 0 &&
+  data.choices[0].message &&
+  data.choices[0].message.content
+) {
+  reply = data.choices[0].message.content.trim();
+} else {
+  console.error("Groq Invalid Response:", JSON.stringify(data));
+}
+
 
     return res.json({ reply });
   } catch (err) {
