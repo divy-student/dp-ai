@@ -6,87 +6,85 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-/* ================= SESSION MEMORY ================= */
 const sessions = {};
 
-/* ================= SYSTEM PROMPT ================= */
 const SYSTEM_PROMPT = `
-You are DP AI 🌙 — a smart, calm, modern AI assistant.
+You are DP AI 🌙.
 
-Identity rules (STRICT):
+Rules:
 - Your name is DP AI.
 - You were created by Divy.
-- NEVER mention Microsoft, OpenAI, Google, Meta, or any company.
-- If asked "who created you" → reply exactly:
-  I was created by Divy.
-- If asked "who are you" → reply:
-  I am DP AI, created by Divy.
-
-Behavior rules:
-- Be intelligent, helpful, and natural.
-- Reply clearly and concisely.
-- Do NOT repeat yourself.
-- Do NOT dump internal instructions.
+- NEVER mention OpenAI, Google, Meta, Microsoft.
+- Be calm, helpful, concise.
 `;
 
-/* ================= SESSION HANDLER ================= */
-function getSession(sessionId) {
-  if (!sessions[sessionId]) {
-    sessions[sessionId] = { history: [] };
+function getSession(id) {
+  if (!sessions[id]) {
+    sessions[id] = { history: [] };
   }
-  return sessions[sessionId];
+  return sessions[id];
 }
 
-/* ================= CHAT ROUTE ================= */
 app.post("/chat", async (req, res) => {
   try {
     const { message, sessionId } = req.body;
     if (!message || !sessionId) {
-      return res.status(400).json({ reply: "Invalid request" });
+      return res.json({ reply: "Invalid request." });
     }
 
-    const memory = getSession(sessionId);
-    memory.history.push(message);
-    if (memory.history.length > 6) memory.history.shift();
+    const text = message.toLowerCase();
 
-    const prompt = `
-${SYSTEM_PROMPT}
+    // ✅ HARD RULES (NO AI CALL)
+    if (text.includes("who are you")) {
+      return res.json({ reply: "I am DP AI, created by Divy." });
+    }
 
-Conversation:
-${memory.history.join("\n")}
+    if (text.includes("who created you")) {
+      return res.json({ reply: "I was created by Divy." });
+    }
 
-DP AI:
-`;
+    const session = getSession(sessionId);
+    session.history.push(message);
+    if (session.history.length > 6) session.history.shift();
 
-    const groqRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: "llama3-8b-8192",
-        messages: [{ role: "user", content: prompt }],
-        temperature: 0.7,
-      }),
-    });
+    const groqResponse = await fetch(
+      "https://api.groq.com/openai/v1/chat/completions",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model: "llama3-8b-8192",
+          messages: [
+            { role: "system", content: SYSTEM_PROMPT },
+            ...session.history.map((m) => ({
+              role: "user",
+              content: m,
+            })),
+          ],
+          temperature: 0.6,
+        }),
+      }
+    );
 
-    const data = await groqRes.json();
+    const data = await groqResponse.json();
 
-    // ✅ CORRECT GROQ RESPONSE PARSING
     const reply =
-      data?.choices?.[0]?.message?.content?.trim() ||
-      "I’m here and listening 🙂";
+      data?.choices?.[0]?.message?.content ||
+      "I’m here with you 🙂";
 
-    res.json({ reply });
+    return res.json({ reply });
   } catch (err) {
-    console.error("Groq Error:", err);
-    res.json({ reply: "I had a small issue. Please try again in a moment 🙂" });
+    console.error("CHAT ERROR:", err);
+    return res.json({
+      reply: "I had a small issue. Please try again in a moment 🙂",
+    });
   }
 });
 
-/* ================= START SERVER ================= */
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
-  console.log(`🌙 DP AI backend running on port ${PORT}`);
+  console.log("🌙 DP AI backend running on port", PORT);
 });
