@@ -70,7 +70,17 @@ app.post("/chat", async (req, res) => {
     }
 
     const memory = getSession(sessionId);
-    memory.history.push(message);
+    // Store user message
+memory.history.push({
+  role: "user",
+  content: message,
+});
+
+// Limit memory (last 8 messages total)
+if (memory.history.length > 8) {
+  memory.history = memory.history.slice(-8);
+}
+
     if (memory.history.length > 6) memory.history.shift();
 
     const prompt = `
@@ -92,7 +102,11 @@ DP AI:
         },
         body: JSON.stringify({
           model: "llama-3.1-8b-instant",
-          messages: [{ role: "user", content: prompt }],
+          messages: [
+  { role: "system", content: SYSTEM_PROMPT },
+  ...memory.history,
+],
+
           temperature: 0.85,
         }),
       }
@@ -110,6 +124,11 @@ DP AI:
     const reply = data.choices[0].message.content.trim();
 
     memory.history.push(reply);
+    
+    memory.history.push({
+  role: "assistant",
+  content: reply,
+});
 
     return res.json({ reply });
   } catch (error) {
