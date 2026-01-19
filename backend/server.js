@@ -8,8 +8,9 @@ app.use(express.json());
 
 const GROQ_API_KEY = process.env.GROQ_API_KEY;
 
-/* ================= SESSION MEMORY ================= */
-const sessions = {};
+/* ================= IN-MEMORY STORE ================= */
+/* email -> { name, history } */
+const users = {};
 
 /* ================= SYSTEM PROMPT ================= */
 const SYSTEM_PROMPT = `
@@ -31,41 +32,39 @@ Style:
 - One reply only
 `;
 
-/* ================= SESSION HANDLER ================= */
-function getSession(sessionId) {
-  if (!sessions[sessionId]) {
-    sessions[sessionId] = {
+/* ================= USER HANDLER ================= */
+function getUser(email) {
+  if (!users[email]) {
+    users[email] = {
       name: null,
-      likes: [],
-      history: [], // <-- WILL STORE OBJECTS, NOT STRINGS
+      history: [],
     };
   }
-  return sessions[sessionId];
+  return users[email];
 }
 
 /* ================= CHAT ROUTE ================= */
 app.post("/chat", async (req, res) => {
   try {
-    const { message, sessionId } = req.body;
+    const { message, email } = req.body;
 
-    if (!message || !sessionId) {
+    if (!message || !email) {
       return res.status(400).json({ reply: "Invalid request 😕" });
     }
 
-    const memory = getSession(sessionId);
+    const user = getUser(email);
     const lower = message.toLowerCase();
 
-    /* ===== MEMORY EXTRACTION ===== */
+    /* ===== NAME MEMORY ===== */
     const nameMatch = message.match(/my name is (.+)/i);
-if (nameMatch) {
-  memory.name = nameMatch[1].trim();
-}
-
+    if (nameMatch) {
+      user.name = nameMatch[1].trim();
+    }
 
     if (lower.includes("what is my name")) {
       return res.json({
-        reply: memory.name
-          ? `Your name is ${memory.name} 😊`
+        reply: user.name
+          ? `Your name is ${user.name} 😊`
           : "You haven’t told me your name yet 🙂",
       });
     }
@@ -73,7 +72,7 @@ if (nameMatch) {
     /* ===== BUILD GROQ MESSAGES ===== */
     const messages = [
       { role: "system", content: SYSTEM_PROMPT },
-      ...memory.history,
+      ...user.history,
       { role: "user", content: message },
     ];
 
@@ -95,19 +94,19 @@ if (nameMatch) {
 
     const data = await groqRes.json();
 
-    if (!data.choices || !data.choices[0]) {
+    if (!data.choices?.[0]?.message?.content) {
       throw new Error("Invalid Groq response");
     }
 
     const reply = data.choices[0].message.content;
 
-    /* ===== SAVE MEMORY (OBJECT FORMAT ONLY) ===== */
-    memory.history.push({ role: "user", content: message });
-    memory.history.push({ role: "assistant", content: reply });
+    /* ===== SAVE MEMORY ===== */
+    user.history.push({ role: "user", content: message });
+    user.history.push({ role: "assistant", content: reply });
 
-    // limit memory
-    if (memory.history.length > 10) {
-      memory.history = memory.history.slice(-10);
+    // keep last 12 messages
+    if (user.history.length > 12) {
+      user.history = user.history.slice(-12);
     }
 
     return res.json({ reply });
