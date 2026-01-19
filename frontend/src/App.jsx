@@ -1,5 +1,18 @@
 import { useState, useEffect, useRef } from "react";
 
+// ===== SESSION ID (PERSISTENT) =====
+function getSessionId() {
+  let id = localStorage.getItem("dp_ai_session_id");
+  if (!id) {
+    id = "dpai_" + crypto.randomUUID();
+    localStorage.setItem("dp_ai_session_id", id);
+  }
+  return id;
+}
+
+const SESSION_ID = getSessionId();
+
+
 function App() {
   /* ================= LOGIN ================= */
   const [username, setUsername] = useState(
@@ -120,7 +133,7 @@ function App() {
       const res = await fetch("https://dp-ai-backend.onrender.com/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: msg, sessionId, username }),
+        body: JSON.stringify({ message: msg, sessionId: sessionId, username }),
       });
 
       const data = await res.json();

@@ -56,9 +56,11 @@ app.post("/chat", async (req, res) => {
     const lower = message.toLowerCase();
 
     /* ===== MEMORY EXTRACTION ===== */
-    if (lower.includes("my name is")) {
-      memory.name = message.split("is").pop().trim();
-    }
+    const nameMatch = message.match(/my name is (.+)/i);
+if (nameMatch) {
+  memory.name = nameMatch[1].trim();
+}
+
 
     if (lower.includes("what is my name")) {
       return res.json({
