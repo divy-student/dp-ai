@@ -1,4 +1,7 @@
-import nodemailer from "nodemailer";
+import { Resend } from "resend";
+
+const resend = new Resend(process.env.RESEND_API_KEY);
+
 import express from "express";
 import cors from "cors";
 import fetch from "node-fetch";
@@ -7,13 +10,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-});
+
 
 console.log("EMAIL CONFIG CHECK:", {
   user: !!process.env.EMAIL_USER,
@@ -40,16 +37,16 @@ app.post("/auth/send-otp", async (req, res) => {
 
     otpStore[email] = {
       otp,
-      expires: Date.now() + 5 * 60 * 1000, // 5 minutes
+      expires: Date.now() + 5 * 60 * 1000,
     };
 
-    await transporter.sendMail({
-      from: `"DP AI 🌙" <${process.env.EMAIL_USER}>`,
+    await resend.emails.send({
+      from: "DP AI 🌙 <onboarding@resend.dev>",
       to: email,
       subject: "Your DP AI Login OTP 🔐",
       html: `
         <h2>DP AI 🌙</h2>
-        <p>Your OTP is:</p>
+        <p>Your login OTP is:</p>
         <h1>${otp}</h1>
         <p>Valid for 5 minutes.</p>
       `,
@@ -57,10 +54,11 @@ app.post("/auth/send-otp", async (req, res) => {
 
     res.json({ message: "OTP sent successfully" });
   } catch (err) {
-    console.error("OTP Send Error:", err.message);
+    console.error("OTP Send Error:", err);
     res.status(500).json({ message: "Failed to send OTP" });
   }
 });
+
 
 app.post("/auth/verify-otp", (req, res) => {
   const { email, otp } = req.body;
