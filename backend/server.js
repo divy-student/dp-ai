@@ -1,3 +1,4 @@
+import nodemailer from "nodemailer";
 import express from "express";
 import cors from "cors";
 import fetch from "node-fetch";
@@ -6,11 +7,91 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
+});
+
+console.log("EMAIL CONFIG CHECK:", {
+  user: !!process.env.EMAIL_USER,
+  pass: !!process.env.EMAIL_PASS,
+});
+
+
 const GROQ_API_KEY = process.env.GROQ_API_KEY;
 
 /* ================= IN-MEMORY STORE ================= */
 /* email -> { name, history } */
 const users = {};
+/* ================= OTP STORE ================= */
+const otpStore = {};
+
+app.post("/auth/send-otp", async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ message: "Email required" });
+    }
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+    otpStore[email] = {
+      otp,
+      expires: Date.now() + 5 * 60 * 1000, // 5 minutes
+    };
+
+    await transporter.sendMail({
+      from: `"DP AI 🌙" <${process.env.EMAIL_USER}>`,
+      to: email,
+      subject: "Your DP AI Login OTP 🔐",
+      html: `
+        <h2>DP AI 🌙</h2>
+        <p>Your OTP is:</p>
+        <h1>${otp}</h1>
+        <p>Valid for 5 minutes.</p>
+      `,
+    });
+
+    res.json({ message: "OTP sent successfully" });
+  } catch (err) {
+    console.error("OTP Send Error:", err.message);
+    res.status(500).json({ message: "Failed to send OTP" });
+  }
+});
+
+app.post("/auth/verify-otp", (req, res) => {
+  const { email, otp } = req.body;
+
+  if (!email || !otp) {
+    return res.status(400).json({ message: "Email & OTP required" });
+  }
+
+  const record = otpStore[email];
+
+  if (!record) {
+    return res.status(400).json({ message: "OTP not found" });
+  }
+
+  if (Date.now() > record.expires) {
+    delete otpStore[email];
+    return res.status(400).json({ message: "OTP expired" });
+  }
+
+  if (record.otp !== otp) {
+    return res.status(400).json({ message: "Invalid OTP" });
+  }
+
+  delete otpStore[email];
+
+  res.json({
+    message: "OTP verified",
+    email,
+  });
+});
+
 
 /* ================= SYSTEM PROMPT ================= */
 const SYSTEM_PROMPT = `
