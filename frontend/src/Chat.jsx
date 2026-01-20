@@ -4,7 +4,7 @@ export default function Chat({ email, onLogout }) {
   const [messages, setMessages] = useState([
     {
       from: "ai",
-      text: `Hi ${email} 🌙, I am DP AI. How can I help you?`,
+      text: `Hi👋, I am DP AI. How can I help you?`,
     },
   ]);
   const [input, setInput] = useState("");
@@ -25,8 +25,8 @@ export default function Chat({ email, onLogout }) {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            message: userMsg,
-            email: email, // ✅ FIXED
+            message: msg,
+            email: username, // ✅ FIXED
           }),
         }
       );
