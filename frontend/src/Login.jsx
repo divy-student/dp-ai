@@ -8,36 +8,46 @@ export default function Login({ onLogin }) {
 
   const sendOtp = async () => {
     setError("");
-    const res = await fetch("https://dp-ai-backend.onrender.com/auth/send-otp", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email }),
-    });
+    try {
+      const res = await fetch(
+        "https://dp-ai-backend.onrender.com/auth/send-otp",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email }),
+        }
+      );
 
-    const data = await res.json();
-    if (data.message) setStep(2);
-    else setError("Server error 😢");
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message);
+      setStep(2);
+    } catch (e) {
+      setError("Failed to send OTP 😕");
+    }
   };
 
   const verifyOtp = async () => {
     setError("");
-    const res = await fetch("https://dp-ai-backend.onrender.com/auth/verify-otp", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, otp }),
-    });
+    try {
+      const res = await fetch(
+        "https://dp-ai-backend.onrender.com/auth/verify-otp",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, otp }),
+        }
+      );
 
-    const data = await res.json();
-    if (data.email) {
-      localStorage.setItem("dp-ai-email", email);
-      onLogin(email); // 👈 VERY IMPORTANT
-    } else {
-      setError("Invalid OTP ❌");
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message);
+      onLogin(email);
+    } catch {
+      setError("Invalid OTP 😕");
     }
   };
 
   return (
-    <div>
+    <div className="login-container">
       <h1>DP AI 🌙</h1>
 
       {step === 1 && (
@@ -47,7 +57,7 @@ export default function Login({ onLogin }) {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
           />
-          <button onClick={sendOtp}>Send OTP 📩</button>
+          <button onClick={sendOtp}>Send OTP 🔐</button>
         </>
       )}
 
@@ -62,7 +72,7 @@ export default function Login({ onLogin }) {
         </>
       )}
 
-      {error && <p>{error}</p>}
+      {error && <p style={{ color: "pink" }}>{error}</p>}
     </div>
   );
 }
