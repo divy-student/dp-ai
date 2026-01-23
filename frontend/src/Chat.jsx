@@ -19,19 +19,23 @@ export default function Chat({ email, onLogout }) {
     setMessages((prev) => [...prev, { from: "user", text: userMsg }]);
 
     try {
-      const res = await fetch(
-        "https://dp-ai-backend.onrender.com/chat",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            message: msg,
-            email: username, // ✅ FIXED
-          }),
-        }
-      );
+      const res = await fetch("https://dp-ai-backend.onrender.com/chat", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    message: msg,
+    email: username, // VERY IMPORTANT
+  }),
+});
 
-      const data = await res.json();
+if (!res.ok) {
+  throw new Error("Server failed");
+}
+
+const data = await res.json();
+
 
       setMessages((prev) => [
         ...prev,
@@ -69,3 +73,5 @@ export default function Chat({ email, onLogout }) {
     </div>
   );
 }
+
+console.log("CHAT HIT:", email, message);
