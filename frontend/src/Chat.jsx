@@ -1,96 +1,145 @@
-import { useState, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import "./chat.css";
 
 export default function Chat({ email, onLogout }) {
-  const [messages, setMessages] = useState([
-    {
-      from: "ai",
-      text: `Hi👋, I am DP AI. How can I help you?`,
-    },
-  ]);
   const [input, setInput] = useState("");
+
+  const [chats, setChats] = useState([]);
+  const [currentId, setCurrentId] = useState(null);
+
   const bottomRef = useRef(null);
 
+  /* ================= LOAD SAVED ================= */
+  useEffect(() => {
+    const saved = JSON.parse(localStorage.getItem("dp-ai-chats")) || [];
+    setChats(saved);
+
+    if (saved.length) setCurrentId(saved[0].id);
+    else createNewChat();
+  }, []);
+
+  /* ================= SAVE ================= */
+  useEffect(() => {
+    localStorage.setItem("dp-ai-chats", JSON.stringify(chats));
+  }, [chats]);
+
+  /* ================= NEW CHAT ================= */
+  const createNewChat = () => {
+    const newChat = {
+      id: Date.now(),
+      title: "New Chat",
+      messages: [],
+    };
+
+    setChats((prev) => [newChat, ...prev]);
+    setCurrentId(newChat.id);
+  };
+
+  /* ================= GET CURRENT ================= */
+  const currentChat = chats.find((c) => c.id === currentId);
+
+  /* ================= SEND ================= */
   const sendMessage = async () => {
     if (!input.trim()) return;
 
     const userMsg = input;
     setInput("");
 
-    setMessages((prev) => [...prev, { from: "user", text: userMsg }]);
+    updateMessages({ from: "user", text: userMsg });
+
+    // set title from first message
+    if (currentChat.title === "New Chat") {
+      updateTitle(userMsg.slice(0, 25));
+    }
 
     try {
       const res = await fetch("https://dp-ai-backend.onrender.com/chat", {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json",
-  },
-  body: JSON.stringify({
-    message: userMsg, // ✅ correct
-    email: email,     // ✅ correct
-  }),
-});
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: userMsg,
+          email,
+        }),
+      });
 
+      const data = await res.json();
 
-if (!res.ok) {
-  throw new Error("Server failed");
-}
-
-const data = await res.json();
-
-
-      setMessages((prev) => [
-        ...prev,
-        { from: "ai", text: data.reply },
-      ]);
+      updateMessages({ from: "ai", text: data.reply });
     } catch {
-      setMessages((prev) => [
-        ...prev,
-        { from: "ai", text: "⚠️ DP AI had an issue" },
-      ]);
+      updateMessages({ from: "ai", text: "⚠️ DP AI had an issue" });
     }
 
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
+  /* ================= HELPERS ================= */
+  const updateMessages = (msg) => {
+    setChats((prev) =>
+      prev.map((c) =>
+        c.id === currentId
+          ? { ...c, messages: [...c.messages, msg] }
+          : c
+      )
+    );
+  };
+
+  const updateTitle = (title) => {
+    setChats((prev) =>
+      prev.map((c) =>
+        c.id === currentId ? { ...c, title } : c
+      )
+    );
+  };
+
+  /* ================= UI ================= */
   return (
-  <div className="app">
-    {/* ===== Sidebar ===== */}
-    <div className="sidebar">
-      <h2>DP AI 🌙</h2>
+    <div className="app">
 
-      <button className="newChat">+ New Chat</button>
+      {/* ===== Sidebar ===== */}
+      <div className="sidebar">
+        <h2>DP AI 🌙</h2>
 
-      <div className="history">
-        <p>Chat 1</p>
-        <p>Chat 2</p>
+        <button className="newChat" onClick={createNewChat}>
+          + New Chat
+        </button>
+
+        <div className="history">
+          {chats.map((c) => (
+            <div
+              key={c.id}
+              className={`historyItem ${c.id === currentId ? "active" : ""}`}
+              onClick={() => setCurrentId(c.id)}
+            >
+              {c.title}
+            </div>
+          ))}
+        </div>
+
+        <button className="logout" onClick={onLogout}>Logout</button>
       </div>
 
-      <button className="logout" onClick={onLogout}>Logout</button>
+
+      {/* ===== Chat Area ===== */}
+      <div className="chatArea">
+        <div className="messages">
+          {currentChat?.messages.map((m, i) => (
+            <div key={i} className={`bubble ${m.from}`}>
+              {m.text}
+            </div>
+          ))}
+          <div ref={bottomRef} />
+        </div>
+
+        <div className="inputArea">
+          <input
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+            placeholder="Type a message..."
+          />
+          <button onClick={sendMessage}>Send</button>
+        </div>
+      </div>
     </div>
-
-    {/* ===== Chat Area ===== */}
-    <div className="chatArea">
-      <div className="messages">
-        {messages.map((m, i) => (
-          <div key={i} className={`bubble ${m.from}`}>
-            {m.text}
-          </div>
-        ))}
-        <div ref={bottomRef} />
-      </div>
-
-      <div className="inputArea">
-        <input
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-          placeholder="Type a message..."
-        />
-        <button onClick={sendMessage}>Send</button>
-      </div>
-    </div>
-  </div>
-);
-
+  );
 }

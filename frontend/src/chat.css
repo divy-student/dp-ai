@@ -99,3 +99,17 @@
   background: #ff69b4;
   cursor: pointer;
 }
+
+.historyItem {
+  padding: 8px;
+  cursor: pointer;
+  border-radius: 6px;
+}
+
+.historyItem:hover {
+  background: rgba(255,255,255,0.1);
+}
+
+.historyItem.active {
+  background: #ff69b4;
+}
