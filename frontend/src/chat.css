@@ -2,7 +2,7 @@
 .app {
   display: flex;
   height: 100vh;
-  background: url("/bg.jpg"); /* your image in public */
+  background: url("/bg.jpeg"); /* your image in public */
   background-size: cover;
   background-position: center;
   color: white;
