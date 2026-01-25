@@ -83,6 +83,18 @@ export default function Chat({ email, onLogout }) {
     );
   };
 
+  const deleteChat = (id) => {
+  const filtered = chats.filter((c) => c.id !== id);
+
+  setChats(filtered);
+
+  // if current chat deleted → switch to another
+  if (currentId === id && filtered.length) {
+    setCurrentId(filtered[0].id);
+  }
+};
+
+
   const updateTitle = (title) => {
     setChats((prev) =>
       prev.map((c) =>
@@ -104,16 +116,25 @@ export default function Chat({ email, onLogout }) {
         </button>
 
         <div className="history">
-          {chats.map((c) => (
-            <div
-              key={c.id}
-              className={`historyItem ${c.id === currentId ? "active" : ""}`}
-              onClick={() => setCurrentId(c.id)}
-            >
-              {c.title}
-            </div>
-          ))}
-        </div>
+  {chats.map((c) => (
+    <div
+      key={c.id}
+      className={`historyItem ${c.id === currentId ? "active" : ""}`}
+    >
+      <span onClick={() => setCurrentId(c.id)}>
+        {c.title}
+      </span>
+
+      <button
+        className="deleteBtn"
+        onClick={() => deleteChat(c.id)}
+      >
+        🗑️
+      </button>
+    </div>
+  ))}
+</div>
+
 
         <button className="logout" onClick={onLogout}>Logout</button>
       </div>
