@@ -1,0 +1,101 @@
+/* ===== Main Layout ===== */
+.app {
+  display: flex;
+  height: 100vh;
+  background: url("/bg.jpg"); /* your image in public */
+  background-size: cover;
+  background-position: center;
+  color: white;
+  font-family: sans-serif;
+}
+
+/* ===== Sidebar ===== */
+.sidebar {
+  width: 260px;
+  background: rgba(0,0,0,0.75);
+  backdrop-filter: blur(10px);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.sidebar h2 {
+  color: #ff69b4;
+}
+
+.newChat,
+.logout {
+  padding: 10px;
+  background: #ff69b4;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.history {
+  flex: 1;
+  overflow-y: auto;
+  opacity: 0.8;
+}
+
+/* ===== Chat Area ===== */
+.chatArea {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  backdrop-filter: blur(6px);
+}
+
+/* ===== Messages ===== */
+.messages {
+  flex: 1;
+  padding: 25px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+/* ===== Chat bubbles ===== */
+.bubble {
+  max-width: 60%;
+  padding: 12px 16px;
+  border-radius: 16px;
+  word-wrap: break-word;
+}
+
+/* AI left */
+.ai {
+  background: rgba(255,255,255,0.15);
+  align-self: flex-start;
+}
+
+/* User right */
+.user {
+  background: #ff69b4;
+  align-self: flex-end;
+}
+
+/* ===== Input ===== */
+.inputArea {
+  display: flex;
+  padding: 15px;
+  background: rgba(0,0,0,0.8);
+}
+
+.inputArea input {
+  flex: 1;
+  padding: 10px;
+  border-radius: 8px;
+  border: none;
+}
+
+.inputArea button {
+  margin-left: 10px;
+  padding: 10px 16px;
+  border-radius: 8px;
+  border: none;
+  background: #ff69b4;
+  cursor: pointer;
+}

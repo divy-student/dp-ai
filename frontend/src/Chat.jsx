@@ -1,4 +1,5 @@
 import { useState, useRef } from "react";
+import "./chat.css";
 
 export default function Chat({ email, onLogout }) {
   const [messages, setMessages] = useState([
@@ -53,24 +54,43 @@ const data = await res.json();
   };
 
   return (
-    <div className="chat-container">
-      <button onClick={onLogout}>Logout</button>
+  <div className="app">
+    {/* ===== Sidebar ===== */}
+    <div className="sidebar">
+      <h2>DP AI 🌙</h2>
 
+      <button className="newChat">+ New Chat</button>
+
+      <div className="history">
+        <p>Chat 1</p>
+        <p>Chat 2</p>
+      </div>
+
+      <button className="logout" onClick={onLogout}>Logout</button>
+    </div>
+
+    {/* ===== Chat Area ===== */}
+    <div className="chatArea">
       <div className="messages">
         {messages.map((m, i) => (
-          <div key={i} className={m.from}>
+          <div key={i} className={`bubble ${m.from}`}>
             {m.text}
           </div>
         ))}
         <div ref={bottomRef} />
       </div>
 
-      <input
-        value={input}
-        onChange={(e) => setInput(e.target.value)}
-        onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-        placeholder="Type a message..."
-      />
+      <div className="inputArea">
+        <input
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+          placeholder="Type a message..."
+        />
+        <button onClick={sendMessage}>Send</button>
+      </div>
     </div>
-  );
+  </div>
+);
+
 }
