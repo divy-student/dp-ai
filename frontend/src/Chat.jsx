@@ -73,5 +73,3 @@ const data = await res.json();
     </div>
   );
 }
-
-console.log("CHAT HIT:", email, message);
