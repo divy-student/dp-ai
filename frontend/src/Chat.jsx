@@ -25,10 +25,11 @@ export default function Chat({ email, onLogout }) {
     "Content-Type": "application/json",
   },
   body: JSON.stringify({
-    message: msg,
-    email: username, // VERY IMPORTANT
+    message: userMsg, // ✅ correct
+    email: email,     // ✅ correct
   }),
 });
+
 
 if (!res.ok) {
   throw new Error("Server failed");

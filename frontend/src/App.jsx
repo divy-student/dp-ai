@@ -64,7 +64,7 @@ function App() {
   // ================= RENDER =================
   return email ? (
     <Chat
-      username={email}        // email used everywhere
+      email={email}        // email used everywhere
       sessionId={email}       // 🔥 SAME AS EMAIL
       onLogout={handleLogout}
     />
