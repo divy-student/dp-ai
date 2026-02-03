@@ -55,7 +55,7 @@ export default function Chat({ name, onLogout }) {
     }
 
     try {
-      const res = await fetch("http://localhost:10000/chat", {
+      const res = await fetch("https://dp-ai-backend.onrender.com/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
