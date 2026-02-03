@@ -4,42 +4,41 @@ import Chat from "./Chat";
 
 function App() {
   // ================= AUTH STATE =================
-  const [email, setEmail] = useState(null);
+  const [name, setName] = useState(null);
   const [loading, setLoading] = useState(true);
 
   // ================= LOAD FROM STORAGE =================
   useEffect(() => {
-    const savedEmail = localStorage.getItem("dp-ai-email");
-    if (savedEmail) {
-      setEmail(savedEmail);
+    const savedName = localStorage.getItem("dpai_name");
+    if (savedName) {
+      setName(savedName);
     }
     setLoading(false);
   }, []);
 
   // ================= LOGIN HANDLER =================
-  const handleLogin = (userEmail) => {
-    localStorage.setItem("dp-ai-email", userEmail);
-
-    /**
-     * 🔥 IMPORTANT
-     * sessionId === email
-     * backend memory works on this
-     */
-    localStorage.setItem("dp-ai-session", userEmail);
-
-    setEmail(userEmail);
+  const handleLogin = (userName) => {
+    localStorage.setItem("dpai_name", userName);
+    setName(userName);
   };
 
   // ================= LOGOUT HANDLER =================
-  const handleLogout = () => {
-    localStorage.removeItem("dp-ai-email");
-    localStorage.removeItem("dp-ai-session");
+  const handleLogout = async () => {
+    const currentName = localStorage.getItem("dpai_name");
+    if (currentName) {
+      try {
+        await fetch("https://dp-ai-backend.onrender.com/auth/logout", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: currentName }),
+        });
+      } catch {
+        // ignore network errors on logout
+      }
+    }
 
-    /**
-     * ⚠️ Chats UI clear
-     * Backend memory stays (Option 2)
-     */
-    setEmail(null);
+    localStorage.removeItem("dpai_name");
+    setName(null);
   };
 
   // ================= LOADING STATE =================
@@ -62,12 +61,8 @@ function App() {
   }
 
   // ================= RENDER =================
-  return email ? (
-    <Chat
-      email={email}        // email used everywhere
-      sessionId={email}       // 🔥 SAME AS EMAIL
-      onLogout={handleLogout}
-    />
+  return name ? (
+    <Chat name={name} onLogout={handleLogout} />
   ) : (
     <Login onLogin={handleLogin} />
   );

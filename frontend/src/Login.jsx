@@ -1,76 +1,30 @@
 import { useState } from "react";
 
 export default function Login({ onLogin }) {
-  const [email, setEmail] = useState("");
-  const [otp, setOtp] = useState("");
-  const [step, setStep] = useState(1);
+  const [name, setName] = useState("");
   const [error, setError] = useState("");
 
-  const sendOtp = async () => {
-    setError("");
-    try {
-      const res = await fetch(
-        "https://dp-ai-backend.onrender.com/auth/send-otp",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email }),
-        }
-      );
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message);
-      setStep(2);
-    } catch (e) {
-      setError("Failed to send OTP 😕");
+  const handleLogin = () => {
+    const trimmed = name.trim();
+    if (!trimmed) {
+      setError("Please enter your name 🙂");
+      return;
     }
-  };
-
-  const verifyOtp = async () => {
     setError("");
-    try {
-      const res = await fetch(
-        "https://dp-ai-backend.onrender.com/auth/verify-otp",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, otp }),
-        }
-      );
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message);
-      onLogin(email);
-    } catch {
-      setError("Invalid OTP 😕");
-    }
+    localStorage.setItem("dpai_name", trimmed);
+    onLogin(trimmed);
   };
 
   return (
     <div className="login-container">
       <h1>DP AI 🌙</h1>
 
-      {step === 1 && (
-        <>
-          <input
-            placeholder="Enter email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
-          <button onClick={sendOtp}>Send OTP 🔐</button>
-        </>
-      )}
-
-      {step === 2 && (
-        <>
-          <input
-            placeholder="Enter OTP"
-            value={otp}
-            onChange={(e) => setOtp(e.target.value)}
-          />
-          <button onClick={verifyOtp}>Verify OTP ✅</button>
-        </>
-      )}
+      <input
+        placeholder="Enter your name"
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+      />
+      <button onClick={handleLogin}>Login</button>
 
       {error && <p style={{ color: "pink" }}>{error}</p>}
     </div>

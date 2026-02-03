@@ -1,6 +1,5 @@
-import { Resend } from "resend";
-
-const resend = new Resend(process.env.RESEND_API_KEY);
+import dotenv from "dotenv";
+dotenv.config();
 
 import express from "express";
 import cors from "cors";
@@ -10,86 +9,56 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-
-
-console.log("EMAIL CONFIG CHECK:", {
-  user: !!process.env.EMAIL_USER,
-  pass: !!process.env.EMAIL_PASS,
-});
-
-
 const GROQ_API_KEY = process.env.GROQ_API_KEY;
 
 /* ================= IN-MEMORY STORE ================= */
-/* email -> { name, history } */
+/* nameKey -> { name, history } */
 const users = {};
-/* ================= OTP STORE ================= */
-const otpStore = {};
 
-app.post("/auth/send-otp", async (req, res) => {
-  try {
-    const { email } = req.body;
-    if (!email) {
-      return res.status(400).json({ message: "Email required" });
-    }
+function normalizeName(name) {
+  return name.trim().toLowerCase();
+}
 
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-
-    otpStore[email] = {
-      otp,
-      expires: Date.now() + 5 * 60 * 1000,
+/* ================= USER HANDLER ================= */
+function getUser(nameKey, displayName) {
+  if (!users[nameKey]) {
+    users[nameKey] = {
+      name: displayName,
+      history: [],
     };
-
-    await resend.emails.send({
-      from: "DP AI 🌙 <onboarding@resend.dev>",
-      to: email,
-      subject: "Your DP AI Login OTP 🔐",
-      html: `
-        <h2>DP AI 🌙</h2>
-        <p>Your login OTP is:</p>
-        <h1>${otp}</h1>
-        <p>Valid for 5 minutes.</p>
-      `,
-    });
-
-    res.json({ message: "OTP sent successfully" });
-  } catch (err) {
-    console.error("OTP Send Error:", err);
-    res.status(500).json({ message: "Failed to send OTP" });
   }
-});
+  return users[nameKey];
+}
 
+/* ================= AUTH ROUTES ================= */
+app.post("/auth/login", (req, res) => {
+  const { name } = req.body;
 
-app.post("/auth/verify-otp", (req, res) => {
-  const { email, otp } = req.body;
-
-  if (!email || !otp) {
-    return res.status(400).json({ message: "Email & OTP required" });
+  if (!name || !name.trim()) {
+    return res.status(400).json({ message: "Name required" });
   }
 
-  const record = otpStore[email];
+  const key = normalizeName(name);
+  const user = getUser(key, name.trim());
 
-  if (!record) {
-    return res.status(400).json({ message: "OTP not found" });
-  }
-
-  if (Date.now() > record.expires) {
-    delete otpStore[email];
-    return res.status(400).json({ message: "OTP expired" });
-  }
-
-  if (record.otp !== otp) {
-    return res.status(400).json({ message: "Invalid OTP" });
-  }
-
-  delete otpStore[email];
-
-  res.json({
-    message: "OTP verified",
-    email,
+  return res.json({
+    message: "Logged in",
+    name: user.name,
   });
 });
 
+app.post("/auth/logout", (req, res) => {
+  const { name } = req.body;
+
+  if (!name || !name.trim()) {
+    return res.status(400).json({ message: "Name required" });
+  }
+
+  const key = normalizeName(name);
+  delete users[key];
+
+  return res.json({ message: "Logged out" });
+});
 
 /* ================= SYSTEM PROMPT ================= */
 const SYSTEM_PROMPT = `
@@ -111,27 +80,33 @@ Style:
 - One reply only
 `;
 
-/* ================= USER HANDLER ================= */
-function getUser(email) {
-  if (!users[email]) {
-    users[email] = {
-      name: null,
-      history: [],
-    };
-  }
-  return users[email];
+/* ================= CREATOR RESPONSE ================= */
+const CREATOR_REPLY =
+  "DPAI was created by Divy Pandey, a Bachelor of Computer Applications student and full-stack developer. It’s a personal AI assistant project built using React, Node.js. This project is made for learning, experimenting, and helping students with coding. GitHub: github.com/divyypandey. Version: 1.0.";
+
+function isCreatorQuestion(text) {
+  const lower = text.toLowerCase();
+  return (
+    lower.includes("who created you") ||
+    lower.includes("who is your creator") ||
+    lower.includes("who made you") ||
+    lower.includes("who is divy") ||
+    lower.includes("about developer") ||
+    lower.includes("about creator")
+  );
 }
 
 /* ================= CHAT ROUTE ================= */
 app.post("/chat", async (req, res) => {
   try {
-    const { message, email } = req.body;
+    const { message, name } = req.body;
 
-    if (!message || !email) {
+    if (!message || !name || !name.trim()) {
       return res.status(400).json({ reply: "Invalid request 😕" });
     }
 
-    const user = getUser(email);
+    const key = normalizeName(name);
+    const user = getUser(key, name.trim());
     const lower = message.toLowerCase();
 
     /* ===== NAME MEMORY ===== */
@@ -146,6 +121,10 @@ app.post("/chat", async (req, res) => {
           ? `Your name is ${user.name} 😊`
           : "You haven’t told me your name yet 🙂",
       });
+    }
+
+    if (isCreatorQuestion(message)) {
+      return res.json({ reply: CREATOR_REPLY });
     }
 
     /* ===== BUILD GROQ MESSAGES ===== */

@@ -1,3 +1,4 @@
+
 /* ===== Main Layout ===== */
 .app {
   display: flex;
@@ -127,4 +128,70 @@
   border: none;
   cursor: pointer;
   font-size: 14px;
+}
+
+/* ===== Mobile ===== */
+@media (max-width: 768px) {
+  .app {
+    flex-direction: column;
+    height: 100vh;
+  }
+
+  .sidebar {
+    width: 100%;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    padding: 12px;
+    overflow-x: auto;
+  }
+
+  .sidebar h2 {
+    font-size: 16px;
+    white-space: nowrap;
+  }
+
+  .newChat,
+  .logout {
+    padding: 8px 10px;
+    font-size: 12px;
+    white-space: nowrap;
+  }
+
+  .history {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+  }
+
+  .historyItem {
+    flex: 0 0 auto;
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.08);
+  }
+
+  .historyItem.active {
+    background: #ff69b4;
+  }
+
+  .deleteBtn {
+    font-size: 12px;
+  }
+
+  .chatArea {
+    flex: 1;
+  }
+
+  .messages {
+    padding: 16px;
+  }
+
+  .bubble {
+    max-width: 85%;
+  }
+
+  .inputArea {
+    padding: 12px;
+  }
 }
