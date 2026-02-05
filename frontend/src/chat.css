@@ -195,102 +195,99 @@
   }
 }
 
-/* MOBILE ONLY STYLES */
+/* =======================================
+   MOBILE ONLY STYLES (FINAL CLEAN VERSION)
+   ======================================= */
 @media (max-width: 768px) {
+
+  /* prevent horizontal scroll */
+  body {
+    overflow-x: hidden;
+  }
+
+  /* push content below header */
   .app {
     padding-top: 56px;
   }
 
-  /* Top header bar */
+  /* ================= HEADER ================= */
   .mobileHeader {
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
+
     height: 56px;
-    background: rgba(0,0,0,0.9);
-    backdrop-filter: blur(12px);
+    background: #111;
+
     display: grid;
     grid-template-columns: 48px 1fr 80px;
     align-items: center;
+
     padding: 0 10px;
-    z-index: 1000;
+    z-index: 3000;
+
     border-bottom: 1px solid rgba(255,255,255,0.08);
   }
 
   .mobileHeader .hamburger {
     font-size: 22px;
-    line-height: 1;
-    background: transparent;
+    background: none;
     border: none;
-    color: #ffffff;
-    cursor: pointer;
+    color: #fff;
   }
 
   .mobileHeader .title {
     text-align: center;
     font-weight: 600;
-    letter-spacing: 0.4px;
     font-size: 15px;
-    color: #ffffff;
   }
 
   .mobileHeader .logout {
     justify-self: end;
-    padding: 6px 10px;
     font-size: 12px;
+    padding: 6px 10px;
   }
 
-  /* Sidebar slide-in */
+  /* ================= SIDEBAR ================= */
   .sidebar {
     position: fixed;
     top: 56px;
-    left: 0;
     bottom: 0;
+    left: 0;
+
     width: 80%;
-    max-width: 320px;
-    background: rgba(0,0,0,0.92);
-    flex-direction: column;
-    padding: 16px;
-    gap: 12px;
+    max-width: 300px;
+
+    background: #0f0f0f;
+
+    transform: translateX(-100%);
+    transition: transform 0.25s ease;
+
     overflow-y: auto;
-    transform: translateX(-105%);
-    transition: transform 220ms ease;
-    z-index: 999;
+    padding: 16px;
+
+    z-index: 2500;
   }
 
   .sidebar.open {
     transform: translateX(0);
   }
 
-  .sidebar .newChat {
-    width: 100%;
-    text-align: center;
-  }
-
-  .history {
-    display: block;
-    overflow-y: auto;
-  }
-
-  .historyItem {
-    border-radius: 10px;
-    padding: 10px 12px;
-    background: rgba(255,255,255,0.06);
-  }
-
-  /* Optional overlay */
   .sidebarOverlay {
     position: fixed;
     top: 56px;
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0,0,0,0.4);
+
+    background: rgba(0,0,0,0.45);
+
     opacity: 0;
     pointer-events: none;
-    transition: opacity 220ms ease;
-    z-index: 998;
+    transition: opacity 0.2s;
+
+    z-index: 2400;
   }
 
   .sidebarOverlay.show {
@@ -298,38 +295,55 @@
     pointer-events: auto;
   }
 
-  /* Chat area full width */
+  /* ================= CHAT LAYOUT ================= */
+
+  /* VERY IMPORTANT: flex layout */
   .chatArea {
+    display: flex;
+    flex-direction: column;
+    height: 100dvh; /* perfect mobile height */
     width: 100%;
   }
 
-  /* Smaller bubbles + spacing */
+  /* scrollable messages */
   .messages {
-    padding: 14px 12px 84px;
+    flex: 1;
+    overflow-y: auto;
+
+    padding: 14px 12px 95px; /* space for input */
     gap: 10px;
   }
 
+  /* bubbles */
   .bubble {
     max-width: 88%;
+    font-size: 14px;
     padding: 10px 12px;
     border-radius: 14px;
-    font-size: 14px;
     line-height: 1.4;
   }
 
-  /* Sticky input like ChatGPT/WhatsApp */
+  /* ================= INPUT ================= */
+
   .inputArea {
     position: fixed;
     left: 0;
     right: 0;
     bottom: 0;
-    padding: 10px 12px;
+
+    display: flex;
     gap: 8px;
-    z-index: 1000;
+
+    padding: 10px 12px;
+
+    background: #111;
     border-top: 1px solid rgba(255,255,255,0.08);
+
+    z-index: 4000; /* ALWAYS above everything */
   }
 
   .inputArea input {
+    flex: 1;
     font-size: 14px;
     padding: 10px 12px;
   }
@@ -337,24 +351,5 @@
   .inputArea button {
     padding: 10px 12px;
     font-size: 13px;
-  }
-}
-
-/* MOBILE ONLY STYLES */
-@media (max-width: 768px) {
-  .chatArea {
-    display: flex;
-    flex-direction: column;
-    height: 100dvh;
-  }
-
-  .messages {
-    flex: 1;
-    overflow-y: auto;
-  }
-
-  .inputArea {
-    position: fixed;
-    bottom: 0;
   }
 }
