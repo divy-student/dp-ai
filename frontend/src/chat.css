@@ -326,20 +326,14 @@
   /* ================= INPUT ================= */
 
   .inputArea {
-    position: fixed;
-    left: 0;
-    right: 0;
-    bottom: 0;
+    flex-shrink: 0;
 
     display: flex;
     gap: 8px;
 
-    padding: 10px 12px;
-
+    padding: 10px;
     background: #111;
     border-top: 1px solid rgba(255,255,255,0.08);
-
-    z-index: 4000; /* ALWAYS above everything */
   }
 
   .inputArea input {
