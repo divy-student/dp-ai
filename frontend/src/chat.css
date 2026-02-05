@@ -195,136 +195,80 @@
   }
 }
 
-/* =======================================
-   MOBILE ONLY STYLES (FINAL CLEAN VERSION)
-   ======================================= */
+/* ================= MOBILE ONLY STYLES ================= */
 @media (max-width: 768px) {
 
-  /* prevent horizontal scroll */
-  body {
-    overflow-x: hidden;
-  }
-
-  /* push content below header */
+  /* reset */
   .app {
-    padding-top: 56px;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
   }
 
-  /* ================= HEADER ================= */
+  /* ===== HEADER ===== */
   .mobileHeader {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-
     height: 56px;
+    flex-shrink: 0;
     background: #111;
 
     display: grid;
     grid-template-columns: 48px 1fr 80px;
     align-items: center;
-
     padding: 0 10px;
-    z-index: 3000;
-
-    border-bottom: 1px solid rgba(255,255,255,0.08);
+    z-index: 1001;
   }
 
-  .mobileHeader .hamburger {
-    font-size: 22px;
-    background: none;
-    border: none;
-    color: #fff;
-  }
-
-  .mobileHeader .title {
-    text-align: center;
-    font-weight: 600;
-    font-size: 15px;
-  }
-
-  .mobileHeader .logout {
-    justify-self: end;
-    font-size: 12px;
-    padding: 6px 10px;
-  }
-
-  /* ================= SIDEBAR ================= */
+  /* ===== SIDEBAR ===== */
   .sidebar {
     position: fixed;
     top: 56px;
-    bottom: 0;
     left: 0;
+    bottom: 0;
 
     width: 80%;
     max-width: 300px;
 
-    background: #0f0f0f;
+    background: #111;
+    z-index: 1002;
 
     transform: translateX(-100%);
     transition: transform 0.25s ease;
-
-    overflow-y: auto;
-    padding: 16px;
-
-    z-index: 2500;
   }
 
   .sidebar.open {
     transform: translateX(0);
   }
 
-  .sidebarOverlay {
-    position: fixed;
-    top: 56px;
-    left: 0;
-    right: 0;
-    bottom: 0;
-
-    background: rgba(0,0,0,0.45);
-
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.2s;
-
-    z-index: 2400;
-  }
-
-  .sidebarOverlay.show {
-    opacity: 1;
-    pointer-events: auto;
-  }
-
-  /* ================= CHAT LAYOUT ================= */
-
-  /* VERY IMPORTANT: flex layout */
+  /* ===== CHAT AREA ===== */
   .chatArea {
+    flex: 1;
     display: flex;
     flex-direction: column;
-    height: 100dvh; /* perfect mobile height */
-    width: 100%;
+    overflow: hidden;
   }
 
-  /* scrollable messages */
+  .chatWrapper {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* messages scroll */
   .messages {
     flex: 1;
     overflow-y: auto;
-
-    padding: 14px 12px 95px; /* space for input */
-    gap: 10px;
+    padding: 12px;
   }
 
   /* bubbles */
   .bubble {
-    max-width: 88%;
+    max-width: 85%;
     font-size: 14px;
     padding: 10px 12px;
-    border-radius: 14px;
-    line-height: 1.4;
   }
 
-  /* ================= INPUT ================= */
-
+  /* ===== INPUT (NOT FIXED) ===== */
   .inputArea {
     flex-shrink: 0;
 
@@ -333,17 +277,31 @@
 
     padding: 10px;
     background: #111;
-    border-top: 1px solid rgba(255,255,255,0.08);
+    border-top: 1px solid rgba(255,255,255,0.1);
   }
 
   .inputArea input {
     flex: 1;
-    font-size: 14px;
-    padding: 10px 12px;
   }
 
-  .inputArea button {
-    padding: 10px 12px;
-    font-size: 13px;
+  /* overlay for sidebar */
+  .sidebarOverlay {
+    position: fixed;
+    top: 56px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+
+    background: rgba(0,0,0,0.5);
+    z-index: 1000;
+
+    opacity: 0;
+    pointer-events: none;
+    transition: 0.2s;
+  }
+
+  .sidebarOverlay.show {
+    opacity: 1;
+    pointer-events: auto;
   }
 }
