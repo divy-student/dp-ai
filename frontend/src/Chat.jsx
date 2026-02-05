@@ -196,25 +196,23 @@ export default function Chat({ name, onLogout }) {
 
       {/* ===== Chat Area ===== */}
       <div className="chatArea">
-        <div className="chatWrapper">
-          <div className="messages">
-            {currentChat?.messages.map((m, i) => (
-              <div key={i} className={`bubble ${m.from}`}>
-                {m.text}
-              </div>
-            ))}
-            <div ref={bottomRef} />
-          </div>
+        <div className="messages">
+          {currentChat?.messages.map((m, i) => (
+            <div key={i} className={`bubble ${m.from}`}>
+              {m.text}
+            </div>
+          ))}
+          <div ref={bottomRef} />
+        </div>
 
-          <div className="inputArea">
-            <input
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-              placeholder="Type a message..."
-            />
-            <button onClick={sendMessage}>Send</button>
-          </div>
+        <div className="inputArea">
+          <input
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+            placeholder="Type a message..."
+          />
+          <button onClick={sendMessage}>Send</button>
         </div>
       </div>
     </div>

@@ -305,7 +305,7 @@
 
   /* Smaller bubbles + spacing */
   .messages {
-    padding: 14px 12px 120px; /* more space for input */
+    padding: 14px 12px 84px;
     gap: 10px;
   }
 
@@ -323,15 +323,10 @@
     left: 0;
     right: 0;
     bottom: 0;
-
-    display: flex; /* important */
-    background: rgba(0,0,0,0.95); /* ← missing before */
-    backdrop-filter: blur(10px);
-
     padding: 10px 12px;
     gap: 8px;
-
-    z-index: 2000; /* higher than everything */
+    z-index: 1000;
+    border-top: 1px solid rgba(255,255,255,0.08);
   }
 
   .inputArea input {
@@ -342,5 +337,24 @@
   .inputArea button {
     padding: 10px 12px;
     font-size: 13px;
+  }
+}
+
+/* MOBILE ONLY STYLES */
+@media (max-width: 768px) {
+  .chatArea {
+    display: flex;
+    flex-direction: column;
+    height: 100dvh;
+  }
+
+  .messages {
+    flex: 1;
+    overflow-y: auto;
+  }
+
+  .inputArea {
+    position: fixed;
+    bottom: 0;
   }
 }
