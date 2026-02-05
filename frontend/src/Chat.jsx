@@ -6,6 +6,7 @@ export default function Chat({ name, onLogout }) {
   const [chats, setChats] = useState([]);
   const [currentId, setCurrentId] = useState(null);
   const [showAbout, setShowAbout] = useState(false);
+  const [open, setOpen] = useState(false);
 
   const bottomRef = useRef(null);
 
@@ -130,13 +131,13 @@ export default function Chat({ name, onLogout }) {
               </a>
             </p>
             <p>
-              Instagram:{" "}
+              Linkedin:{" "}
               <a
-                href="https://www.instagram.com/divyypandey/"
+                href="https://www.linkedin.com/in/divyanshu-pandey-64a4932bb/"
                 target="_blank"
                 rel="noreferrer"
               >
-                https://www.instagram.com/divyypandey/
+                https://www.linkedin.com/in/divyanshu-pandey-64a4932bb/
               </a>
             </p>
             <p>Version: 1.0</p>
@@ -144,8 +145,24 @@ export default function Chat({ name, onLogout }) {
         </div>
       )}
 
+      {/* ===== Mobile Header ===== */}
+      <div className="mobileHeader">
+        <button className="hamburger" onClick={() => setOpen(!open)}>
+          ☰
+        </button>
+        <div className="title">DP AI</div>
+        <button className="logout" onClick={handleLogout}>
+          Logout
+        </button>
+      </div>
+
+      <div
+        className={`sidebarOverlay ${open ? "show" : ""}`}
+        onClick={() => setOpen(false)}
+      />
+
       {/* ===== Sidebar ===== */}
-      <div className="sidebar">
+      <div className={`sidebar ${open ? "open" : ""}`}>
         <div className="sidebarHeader">
           <h2>DP AI 🌙</h2>
           <button className="aboutIcon" onClick={() => setShowAbout(true)}>
