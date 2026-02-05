@@ -131,13 +131,13 @@ export default function Chat({ name, onLogout }) {
               </a>
             </p>
             <p>
-              Instagram:{" "}
+              Linkedin:{" "}
               <a
-                href="https://www.instagram.com/divyypandey/"
+                href="https://www.linkedin.com/in/divyanshu-pandey-64a4932bb/"
                 target="_blank"
                 rel="noreferrer"
               >
-                https://www.instagram.com/divyypandey/
+                https://www.linkedin.com/in/divyanshu-pandey-64a4932bb/
               </a>
             </p>
             <p>Version: 1.0</p>
