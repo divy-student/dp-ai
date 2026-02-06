@@ -15,11 +15,20 @@ export default function Chat({ name, onLogout }) {
   /* ================= LOAD SAVED ================= */
   useEffect(() => {
     const saved = JSON.parse(localStorage.getItem(storageKey)) || [];
-    setChats(saved);
 
-    if (saved.length) setCurrentId(saved[0].id);
-    else createNewChat();
-  }, [storageKey]);
+    if (saved.length) {
+      setChats(saved);
+      setCurrentId(saved[0].id);
+    } else {
+      const first = {
+        id: Date.now(),
+        title: "New Chat",
+        messages: [],
+      };
+      setChats([first]);
+      setCurrentId(first.id);
+    }
+  }, []);
 
   /* ================= SAVE ================= */
   useEffect(() => {
@@ -39,7 +48,7 @@ export default function Chat({ name, onLogout }) {
   };
 
   /* ================= GET CURRENT ================= */
-  const currentChat = chats.find((c) => c.id === currentId);
+  const currentChat = chats.find((c) => c.id === currentId) || chats[0];
 
   /* ================= SEND ================= */
   const sendMessage = async () => {
@@ -69,7 +78,7 @@ export default function Chat({ name, onLogout }) {
 
       updateMessages({ from: "ai", text: data.reply });
     } catch {
-      updateMessages({ from: "ai", text: "⚠️ DP AI had an issue" });
+      updateMessages({ from: "ai", text: "âš ï¸ DP AI had an issue" });
     }
 
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -89,7 +98,7 @@ export default function Chat({ name, onLogout }) {
 
     setChats(filtered);
 
-    // if current chat deleted → switch to another
+    // if current chat deleted â†’ switch to another
     if (currentId === id && filtered.length) {
       setCurrentId(filtered[0].id);
     }
@@ -115,7 +124,7 @@ export default function Chat({ name, onLogout }) {
         <div className="aboutOverlay" onClick={() => setShowAbout(false)}>
           <div className="aboutModal" onClick={(e) => e.stopPropagation()}>
             <button className="aboutClose" onClick={() => setShowAbout(false)}>
-              ✕
+              âœ•
             </button>
             <h3>DPAI</h3>
             <p>Created by Divy Pandey</p>
@@ -148,7 +157,7 @@ export default function Chat({ name, onLogout }) {
       {/* ===== Mobile Header ===== */}
       <div className="mobileHeader">
         <button className="hamburger" onClick={() => setOpen(!open)}>
-          ☰
+          â˜°
         </button>
         <div className="title">DP AI</div>
         <button className="logout" onClick={handleLogout}>
@@ -164,13 +173,19 @@ export default function Chat({ name, onLogout }) {
       {/* ===== Sidebar ===== */}
       <div className={`sidebar ${open ? "open" : ""}`}>
         <div className="sidebarHeader">
-          <h2>DP AI 🌙</h2>
+          <h2>DP AI ðŸŒ™</h2>
           <button className="aboutIcon" onClick={() => setShowAbout(true)}>
-            ⓘ
+            â“˜
           </button>
         </div>
 
-        <button className="newChat" onClick={createNewChat}>
+        <button
+          className="newChat"
+          onClick={() => {
+            createNewChat();
+            setOpen(false);
+          }}
+        >
           + New Chat
         </button>
 
@@ -180,10 +195,17 @@ export default function Chat({ name, onLogout }) {
               key={c.id}
               className={`historyItem ${c.id === currentId ? "active" : ""}`}
             >
-              <span onClick={() => setCurrentId(c.id)}>{c.title}</span>
+              <span
+                onClick={() => {
+                  setCurrentId(c.id);
+                  setOpen(false);
+                }}
+              >
+                {c.title}
+              </span>
 
               <button className="deleteBtn" onClick={() => deleteChat(c.id)}>
-                🗑️
+                ðŸ—‘ï¸
               </button>
             </div>
           ))}
