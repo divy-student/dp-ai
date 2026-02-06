@@ -12,28 +12,19 @@ export default function Chat({ name, onLogout }) {
 
   const storageKey = `chats_${(name || "").trim().toLowerCase()}`;
 
-  /* ================= LOAD ================= */
+  /* ================= LOAD SAVED ================= */
   useEffect(() => {
     const saved = JSON.parse(localStorage.getItem(storageKey)) || [];
+    setChats(saved);
 
-    if (saved.length) {
-      setChats(saved);
-      setCurrentId(saved[0].id);
-    } else {
-      const first = {
-        id: Date.now(),
-        title: "New Chat",
-        messages: [],
-      };
-      setChats([first]);
-      setCurrentId(first.id);
-    }
-  }, []);
+    if (saved.length) setCurrentId(saved[0].id);
+    else createNewChat();
+  }, [storageKey]);
 
   /* ================= SAVE ================= */
   useEffect(() => {
     localStorage.setItem(storageKey, JSON.stringify(chats));
-  }, [chats]);
+  }, [chats, storageKey]);
 
   /* ================= NEW CHAT ================= */
   const createNewChat = () => {
@@ -47,7 +38,8 @@ export default function Chat({ name, onLogout }) {
     setCurrentId(newChat.id);
   };
 
-  const currentChat = chats.find((c) => c.id === currentId) || chats[0];
+  /* ================= GET CURRENT ================= */
+  const currentChat = chats.find((c) => c.id === currentId);
 
   /* ================= SEND ================= */
   const sendMessage = async () => {
@@ -58,6 +50,7 @@ export default function Chat({ name, onLogout }) {
 
     updateMessages({ from: "user", text: userMsg });
 
+    // set title from first message
     if (currentChat.title === "New Chat") {
       updateTitle(userMsg.slice(0, 25));
     }
@@ -66,13 +59,17 @@ export default function Chat({ name, onLogout }) {
       const res = await fetch("https://dp-ai-backend.onrender.com/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: userMsg, name }),
+        body: JSON.stringify({
+          message: userMsg,
+          name,
+        }),
       });
 
       const data = await res.json();
+
       updateMessages({ from: "ai", text: data.reply });
     } catch {
-      updateMessages({ from: "ai", text: "⚠ DP AI had an issue" });
+      updateMessages({ from: "ai", text: "⚠️ DP AI had an issue" });
     }
 
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -89,8 +86,10 @@ export default function Chat({ name, onLogout }) {
 
   const deleteChat = (id) => {
     const filtered = chats.filter((c) => c.id !== id);
+
     setChats(filtered);
 
+    // if current chat deleted → switch to another
     if (currentId === id && filtered.length) {
       setCurrentId(filtered[0].id);
     }
@@ -112,15 +111,46 @@ export default function Chat({ name, onLogout }) {
   /* ================= UI ================= */
   return (
     <div className="app">
+      {showAbout && (
+        <div className="aboutOverlay" onClick={() => setShowAbout(false)}>
+          <div className="aboutModal" onClick={(e) => e.stopPropagation()}>
+            <button className="aboutClose" onClick={() => setShowAbout(false)}>
+              ✕
+            </button>
+            <h3>DPAI</h3>
+            <p>Created by Divy Pandey</p>
+            <p>Student of Computer Science | Full Stack Developer</p>
+            <p>
+              GitHub:{" "}
+              <a
+                href="https://github.com/divyypandey"
+                target="_blank"
+                rel="noreferrer"
+              >
+                https://github.com/divyypandey
+              </a>
+            </p>
+            <p>
+              Linkedin:{" "}
+              <a
+                href="https://www.linkedin.com/in/divyanshu-pandey-64a4932bb/"
+                target="_blank"
+                rel="noreferrer"
+              >
+                https://www.linkedin.com/in/divyanshu-pandey-64a4932bb/
+              </a>
+            </p>
+            <p>Version: 1.0</p>
+          </div>
+        </div>
+      )}
 
       {/* ===== Mobile Header ===== */}
       <div className="mobileHeader">
         <button className="hamburger" onClick={() => setOpen(!open)}>
           ☰
         </button>
-
         <div className="title">DP AI</div>
-
         <button className="logout" onClick={handleLogout}>
           Logout
         </button>
@@ -133,7 +163,14 @@ export default function Chat({ name, onLogout }) {
 
       {/* ===== Sidebar ===== */}
       <div className={`sidebar ${open ? "open" : ""}`}>
-        <button className="newChat" onClick={() => { createNewChat(); setOpen(false); }}>
+        <div className="sidebarHeader">
+          <h2>DP AI 🌙</h2>
+          <button className="aboutIcon" onClick={() => setShowAbout(true)}>
+            ⓘ
+          </button>
+        </div>
+
+        <button className="newChat" onClick={createNewChat}>
           + New Chat
         </button>
 
@@ -142,12 +179,28 @@ export default function Chat({ name, onLogout }) {
             <div
               key={c.id}
               className={`historyItem ${c.id === currentId ? "active" : ""}`}
-              onClick={() => { setCurrentId(c.id); setOpen(false); }}
             >
-              {c.title}
+              <span
+  onClick={() => {
+    setCurrentId(c.id);
+    setOpen(false);
+  }}
+>
+  {c.title}
+</span>
+
+
+
+              <button className="deleteBtn" onClick={() => deleteChat(c.id)}>
+                🗑️
+              </button>
             </div>
           ))}
         </div>
+
+        <button className="logout" onClick={handleLogout}>
+          Logout
+        </button>
       </div>
 
       {/* ===== Chat Area ===== */}
