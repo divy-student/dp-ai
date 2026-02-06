@@ -39,7 +39,7 @@ export default function Chat({ name, onLogout }) {
   };
 
   /* ================= GET CURRENT ================= */
-  const currentChat = chats.find((c) => c.id === currentId);
+  const currentChat = chats.find((c) => c.id === currentId) || chats[0];
 
   /* ================= SEND ================= */
   const sendMessage = async () => {
@@ -79,8 +79,8 @@ export default function Chat({ name, onLogout }) {
   const updateMessages = (msg) => {
     setChats((prev) =>
       prev.map((c) =>
-        c.id === currentId ? { ...c, messages: [...c.messages, msg] } : c
-      )
+        c.id === currentId ? { ...c, messages: [...c.messages, msg] } : c,
+      ),
     );
   };
 
@@ -97,7 +97,7 @@ export default function Chat({ name, onLogout }) {
 
   const updateTitle = (title) => {
     setChats((prev) =>
-      prev.map((c) => (c.id === currentId ? { ...c, title } : c))
+      prev.map((c) => (c.id === currentId ? { ...c, title } : c)),
     );
   };
 
@@ -181,15 +181,13 @@ export default function Chat({ name, onLogout }) {
               className={`historyItem ${c.id === currentId ? "active" : ""}`}
             >
               <span
-  onClick={() => {
-    setCurrentId(c.id);
-    setOpen(false);
-  }}
->
-  {c.title}
-</span>
-
-
+                onClick={() => {
+                  setCurrentId(c.id);
+                  setOpen(false);
+                }}
+              >
+                {c.title}
+              </span>
 
               <button className="deleteBtn" onClick={() => deleteChat(c.id)}>
                 🗑️
